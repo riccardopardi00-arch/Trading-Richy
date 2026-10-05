@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>Trading Richy · Definitiva</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--text:#121826;--muted:#687386;--line:#e7eaf0;--accent:#315efb;--green:#16875a;--red:#d04444;--amber:#b7791f;--dark:#0b1020}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif}
+header{position:sticky;top:0;z-index:10;background:rgba(11,16,32,.96);color:#fff;padding:16px 18px 14px;backdrop-filter:blur(14px)}
+.head{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-weight:800;font-size:21px}.sub{font-size:12px;color:#aab4ca;margin-top:2px}
+button,select{border:0;border-radius:12px;padding:10px 12px;background:#eef2ff;color:#2444b8;font-weight:700}button{cursor:pointer}
+main{max-width:1100px;margin:auto;padding:16px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 4px 16px #1018280a}.label{color:var(--muted);font-size:12px}.big{font-size:25px;font-weight:800;margin-top:5px}.pos{color:var(--green)}.neg{color:var(--red)}
+.section{margin-top:18px;display:flex;align-items:center;justify-content:space-between}.section h2{font-size:18px;margin:0}
+.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:900px}.table th,.table td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);white-space:nowrap}.table th{font-size:12px;color:var(--muted);font-weight:700}.ticker{font-weight:800}.pill{display:inline-block;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}.p-green{background:#e7f7ef;color:#13764f}.p-red{background:#fdecec;color:#b53333}.p-amber{background:#fff5df;color:#9a6615}.radar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.radar .card{position:relative}.reason{color:var(--muted);font-size:13px;margin-top:8px}.signal{font-weight:800;font-size:12px}.metric{display:flex;justify-content:space-between;margin-top:10px;font-size:13px}.bar{height:7px;background:#edf0f5;border-radius:8px;overflow:hidden;margin-top:6px}.fill{height:100%;background:var(--accent);border-radius:8px}
+.notice{background:#fff9e8;border:1px solid #f3df9b;color:#72530b;border-radius:14px;padding:12px 14px;font-size:13px;margin-top:14px}.tag{font-size:11px;background:#edf2ff;color:#3651a8;padding:4px 7px;border-radius:999px}
+.modal{display:none;position:fixed;inset:0;background:#0007;z-index:30;padding:18px}.modalbox{max-width:600px;margin:7vh auto;background:#fff;border-radius:22px;padding:20px}.modalbox h3{margin-top:0}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{margin:9px 0}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:11px;font-size:15px}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}.radar{grid-template-columns:1fr}.head{align-items:flex-start}.brand{font-size:19px}main{padding:12px}.card{border-radius:16px}.big{font-size:22px}}
+@media(max-width:480px){.grid{gap:8px}.card{padding:13px}.label{font-size:11px}.big{font-size:20px}.section{margin-top:15px}.notice{font-size:12px}}
+</style>
+</head>
+<body>
+<header><div class="head"><div><div class="brand">📈 Trading Richy</div><div class="sub">DEFINITIVA · EODHD + fallback dati giornalieri</div></div><button onclick="openSettings()">⚙️ Impostazioni</button></div></header>
+<main>
+<div class="notice" id="dataNotice">Avvio dati gratuiti… EODHD è la fonte primaria; se un titolo non è disponibile su EODHD, viene usato automaticamente il fallback giornaliero.</div>
+
+<div class="grid" style="margin-top:14px">
+<div class="card"><div class="label">Capitale investito</div><div class="big">€21.815,86</div></div>
+<div class="card"><div class="label">Posizioni</div><div class="big">12</div></div>
+<div class="card"><div class="label">Radar Italia</div><div class="big" id="radarCount">—</div></div>
+<div class="card"><div class="label">Stato dati</div><div class="big" id="dataStatus" style="font-size:16px;margin-top:9px"><span class="tag">AVVIO</span></div></div>
+</div>
+
+<div class="section"><h2>Portafoglio</h2><div><button onclick="refreshLive(true)">↻ Aggiorna dati</button> <button onclick="alert('Nella versione live qui potrai aggiungere un titolo.')">＋ Aggiungi</button></div></div>
+<div class="card tablewrap" style="margin-top:10px">
+<table class="table"><thead><tr><th>Titolo</th><th>Qtà</th><th>Prezzo medio</th><th>Prezzo</th><th>P/L €</th><th>P/L %</th><th>RSI</th><th>Stato</th></tr></thead>
+<tbody id="portfolio"></tbody></table></div>
+
+<div class="section"><h2>Radar Italia 🇮🇹</h2><select id="radarFilter" onchange="renderRadar()"><option>Focus</option><option>Ipersold</option><option>Momentum</option><option>Volume</option></select></div>
+<div class="radar" id="radar" style="margin-top:10px"></div>
+
+<div class="section"><h2>Indicatori di ipercomprato / ipervenduto</h2></div>
+<div class="card" style="margin-top:10px">
+<div class="metric"><span>RSI (14)</span><b>56,4 · neutrale</b></div><div class="bar"><div class="fill" style="width:56.4%"></div></div>
+<div class="metric"><span>Stocastico %K</span><b>42,8 · neutrale</b></div><div class="bar"><div class="fill" style="width:42.8%"></div></div>
+<div class="metric"><span>Williams %R</span><b>-48 · neutrale</b></div><div class="bar"><div class="fill" style="width:52%"></div></div>
+<p class="reason">Regola iniziale: RSI &gt;70 e Stocastico &gt;80 vengono evidenziati come possibile <b>ipercomprato</b>; RSI &lt;30 e Stocastico &lt;20 come possibile <b>ipervenduto</b>. Non sono segnali automatici di acquisto o vendita.</p>
+</div>
+
+<div class="section"><h2>Analisi tecnica</h2></div>
+<div class="grid" style="margin-top:10px">
+<div class="card"><div class="label">Trend</div><div class="big" style="font-size:18px">Medio termine ↗</div><div class="reason">Prezzo sopra SMA 50</div></div>
+<div class="card"><div class="label">MACD</div><div class="big" style="font-size:18px">Positivo</div><div class="reason">Momentum favorevole</div></div>
+<div class="card"><div class="label">Bollinger</div><div class="big" style="font-size:18px">Fascia centrale</div><div class="reason">Volatilità moderata</div></div>
+<div class="card"><div class="label">Volume</div><div class="big" style="font-size:18px">+18%</div><div class="reason">vs media 20 giorni</div></div>
+</div>
+
+<div class="section"><h2>Come leggerà Trading Richy</h2></div>
+<div class="card">
+<p><b>ACQUISTO / ATTENDI / VENDITA</b> saranno sempre indicazioni informative, accompagnate dai fattori che le hanno determinate.</p>
+<p class="reason">Il sistema non esegue ordini. I segnali di ipercomprato/ipervenduto saranno solo uno dei componenti dell'analisi e non verranno usati da soli per generare un'indicazione.</p>
+</div>
+</main>
+<div class="notice" style="max-width:1100px;margin:0 auto 18px">I dati EODHD sono prioritari. Quando un titolo non è coperto dal provider, Trading Richy usa un fallback giornaliero server-side. Le quotazioni possono essere differite. Le indicazioni ACQUISTO / ATTENDI / VENDITA sono esclusivamente informative e non eseguono ordini.</div>
+
+<div class="modal" id="modal"><div class="modalbox"><h3>Impostazioni</h3>
+<p class="reason">La chiave EODHD è configurata in Netlify e non viene pubblicata nell'app. I dati vengono aggiornati con cache locale di 15 minuti per ridurre il consumo della quota gratuita.</p>
+<div class="row"><div class="field"><label>Mercato Radar</label><input value="Euronext Milan" disabled></div><div class="field"><label>Growth Milan</label><input value="Incluso" disabled></div></div>
+<button onclick="closeSettings()">Chiudi</button></div></div>
+
+<script>
+const portfolio=[
+["EssilorLuxottica","EL","FR0000121667",18,222.40,"EL.PA",61],
+["Intesa Sanpaolo","ISP","IT0000072618",400,5.62,"ISP.MI",58],
+["Snam","SRG","IT0003153415",400,6.24,"SRG.MI",39],
+["Saipem","SPM","IT0005495657",500,4.38,"SPM.MI",28],
+["Enel","ENEL","IT0003128367",230,9.41,"ENEL.MI",34],
+["Eni","ENI","IT0003132476",75,20.36,"ENI.MI",63],
+["Lottomatica","LTMC","IT0005541336",50,25.04,"LTMC.MI",71],
+["ERG","ERG","IT0001157020",50,24.17,"ERG.MI",44],
+["Legrand","LR","FR0010307819",7,149.30,"LR.PA",67],
+["TraWell Co","TWL","IT0005717571",40,39.16,"TWL.MI",31],
+["Leonardo","LDO","IT0003856405",18,64.18,"LDO.MI",76],
+["Danone","BN","FR0000120644",12,80.01,"BN.PA",37]
+];
+let liveRows={};
+
+function fmt(n,d=2){return Number(n).toLocaleString("it-IT",{minimumFractionDigits:d,maximumFractionDigits:d})}
+function rsiState(v){return v>=70?"Ipercomprato":v<=30?"Ipervenduto":"Neutrale"}
+function pill(v){let c=v>=70?"p-red":v<=30?"p-green":"p-amber";return `<span class="pill ${c}">${rsiState(v)}</span>`}
+function calcRSI(closes, period=14){
+  if(!closes || closes.length<period+1)return null;
+  let gains=0,losses=0;
+  for(let i=closes.length-period;i<closes.length;i++){let d=closes[i]-closes[i-1]; if(d>=0)gains+=d; else losses-=d;}
+  if(losses===0)return 100;
+  return 100-(100/(1+gains/losses));
+}
+function sma(a,n){return a.length<n?null:a.slice(-n).reduce((x,y)=>x+y,0)/n}
+function stochastic(closes, highs, lows, n=14){
+  if(closes.length<n)return null;
+  let h=Math.max(...highs.slice(-n)), l=Math.min(...lows.slice(-n));
+  return h===l?50:100*(closes.at(-1)-l)/(h-l);
+}
+function williams(closes, highs, lows, n=14){
+  let k=stochastic(closes,highs,lows,n); return k==null?null:k-100;
+}
+function renderPortfolio(){
+  document.getElementById("portfolio").innerHTML=portfolio.map(x=>{
+    const row=liveRows[x[1]]||{};
+    const price=row.price ?? null, rsi=row.rsi ?? x[6];
+    const pl=price==null?null:(price-x[4])*x[3], pct=price==null?null:(price/x[4]-1)*100;
+    return `<tr><td><span class="ticker">${x[0]}</span><br><span class="label">${x[1]}</span></td>
+    <td>${x[3]}</td><td>€${fmt(x[4])}</td>
+    <td>${price==null?"—":"€"+fmt(price)}</td>
+    <td class="${pl==null?"":pl>=0?"pos":"neg"}">${pl==null?"—":(pl>=0?"+":"")+"€"+fmt(pl)}</td>
+    <td class="${pct==null?"":pct>=0?"pos":"neg"}">${pct==null?"—":(pct>=0?"+":"")+fmt(pct,1)+"%"}</td>
+    <td>${rsi==null?"—":fmt(rsi,1)}</td><td>${rsi==null?"—":pill(rsi)}</td></tr>`
+  }).join("");
+}
+const radar=[
+["Intesa Sanpaolo","ISP","Pullback/momentum da verificare con volume e trend","Neutrale","58"],
+["TraWell Co","TWL","Prezzo debole: RSI in fascia bassa da monitorare","Ipervenduto","31"],
+["Leonardo","LDO","Trend positivo: RSI elevato, possibile raffreddamento","Ipercomprato","76"]
+];
+function renderRadar(){
+  let f=document.getElementById("radarFilter").value;
+  let data=radar.filter(x=>f==="Ipersold"?+x[4]<=40:f==="Momentum"?x[1]!=="TWL":true);
+  document.getElementById("radar").innerHTML=data.map(x=>`<div class="card"><div class="label">${x[1]} · Italia</div><div style="font-weight:800;font-size:17px;margin-top:3px">${x[0]}</div><div class="reason">${x[2]}</div><div class="metric"><span>RSI 14</span><b>${x[4]}</b></div><div style="margin-top:9px">${x[3]==="Ipervenduto"?'<span class="pill p-green">Possibile ipervenduto</span>':x[3]==="Ipercomprato"?'<span class="pill p-red">Possibile ipercomprato</span>':'<span class="pill p-amber">Neutrale</span>'}</div></div>`).join("");
+}
+function openSettings(){document.getElementById("modal").style.display="block"}
+function closeSettings(){document.getElementById("modal").style.display="none"}
+
+function calcLiveIndicators(row){
+  const c=row?.closes||[];
+  if(c.length<15)return row;
+  const rsi=calcRSI(c,14);
+  const highs=row.highs||c, lows=row.lows||c;
+  const stoch=stochastic(c,highs,lows,14);
+  const will=williams(c,highs,lows,14);
+  const s20=sma(c,20), s50=sma(c,50);
+  return {...row,rsi,stoch,will,sma20:s20,sma50:s50};
+}
+function setDataStatus(text, live=false){
+  document.getElementById('dataStatus').innerHTML=live?'<span class="tag">LIVE EODHD</span>':'<span class="tag">DEMO</span>';
+  document.getElementById('dataNotice').innerHTML=text;
+}
+async function refreshLive(force=false){
+  const notice=document.getElementById('dataNotice');
+  const cacheKey='tradingRichyFinalMarketCacheV1';
+  const maxAge=15*60*1000;
+  if(!force){
+    try{
+      const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
+      if(cached && Date.now()-cached.savedAt<maxAge && cached.payload?.ok){
+        liveRows=Object.fromEntries(Object.entries(cached.payload.data||{}).map(([k,v])=>[k,calcLiveIndicators(v)]));
+        renderPortfolio();
+        setDataStatus(`<b>Dati EODHD attivi.</b> Cache locale di ${Math.round((Date.now()-cached.savedAt)/60000)} min; nessuna nuova chiamata API. Ultimo dato mercato: ${cached.payload.latestDate||'—'}.`,true);
+        return;
+      }
+    }catch(e){}
+  }
+  notice.innerHTML=force?'Aggiornamento EODHD forzato…':'Aggiornamento dati EODHD in corso…';
+  try{
+    const res=await fetch('/.netlify/functions/market-data',{cache:'no-store'});
+    if(!res.ok) throw new Error('provider non configurato o funzione non pubblicata');
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.message||'errore dati');
+    liveRows=Object.fromEntries(Object.entries(data.data||{}).map(([k,v])=>[k,calcLiveIndicators(v)]));
+    renderPortfolio();
+    try{localStorage.setItem(cacheKey,JSON.stringify({savedAt:Date.now(),payload:data}));}catch(e){}
+    const count=Object.keys(liveRows).length;
+    const err=data.errors?.length?` <span class="reason">Non disponibili: ${data.errors.map(e=>e.code||e).join(', ')}. La quota gratuita EODHD è di 20 chiamate/giorno.</span>`:'';
+    const sources=[...new Set(Object.values(data.data||{}).map(x=>x.source).filter(Boolean))].join(' + '); document.getElementById('radarCount').textContent=count>=9?'Radar attivo':'In preparazione'; setDataStatus(`<b>Dati di mercato attivi.</b> ${count}/12 titoli ricevuti. Ultimo dato: ${data.latestDate||'—'}. Fonte: ${sources||'—'}. Cache locale 15 minuti.${err}`,true);
+  }catch(e){
+    setDataStatus(`<b>Dati non disponibili.</b> ${e.message}. Riprova più tardi.`);
+    renderPortfolio();
+  }
+}
+
+renderPortfolio();renderRadar();refreshLive();
+</script>
+</body></html>
